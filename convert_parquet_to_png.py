@@ -5,7 +5,7 @@ import base64
 import os
 import json
 import glob
-
+from tqdm import tqdm
 
 data_path = os.getcwd()
 
@@ -92,7 +92,7 @@ def process_ocr_grounding():
 def process_guiact_web_single():
     out_path = f"{data_path}/images/guiact/web-single"
     images = read_data([
-        "./data/web-single_test_images.parquet"
+        "./data/web-single_test_images.parquet",
         "./data/web-single_train_images.parquet",
     ])
     os.makedirs(out_path)
@@ -102,7 +102,7 @@ def process_guiact_web_single():
 def process_guiact_web_multi():
     out_path = f"{data_path}/images/guiact/web-multi"
     images = read_data([
-        "./data/web-multi_test_images.parquet"
+        "./data/web-multi_test_images.parquet",
         "./data/web-multi_train_images.parquet",
     ])
     os.makedirs(out_path)
@@ -112,7 +112,7 @@ def process_guiact_web_multi():
 def process_guiact_smartphone():
     out_path = f"{data_path}/images/guiact/smartphone"
     images = read_data([
-        "./data/smartphone_test_images.parquet"
+        "./data/smartphone_test_images.parquet",
         "./data/smartphone_train_images.parquet",
     ])
     os.makedirs(out_path)
