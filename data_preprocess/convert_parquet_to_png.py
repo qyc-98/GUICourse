@@ -6,6 +6,10 @@ import os
 import json
 import glob
 
+
+data_path = os.getcwd()
+
+
 def write_json(data, path):
     with open(path, 'w', encoding='utf8') as f:
         f.write(json.dumps(data, ensure_ascii=False, indent=4))
@@ -75,7 +79,7 @@ def write_images_version2(images, base_path):
 
 
 def process_ocr_grounding():
-    out_path = "./images/guienv"
+    out_path = f"{data_path}/images/guienv"
     images = read_data([
         "./data/ocr_grounding_test_images.parquet",
         "./data/ocr_grounding_train_stage1_images.parquet",
@@ -86,7 +90,7 @@ def process_ocr_grounding():
     write_images(images, out_path)
 
 def process_guiact_web_single():
-    out_path = "./images/guiact/web-single"
+    out_path = f"{data_path}/images/guiact/web-single"
     images = read_data([
         "./data/web-single_test_images.parquet"
         "./data/web-single_train_images.parquet",
@@ -96,7 +100,7 @@ def process_guiact_web_single():
     write_images(images, out_path)
 
 def process_guiact_web_multi():
-    out_path = "./images/guiact/web-multi"
+    out_path = f"{data_path}/images/guiact/web-multi"
     images = read_data([
         "./data/web-multi_test_images.parquet"
         "./data/web-multi_train_images.parquet",
@@ -106,7 +110,7 @@ def process_guiact_web_multi():
     write_images_version1(images, out_path)
 
 def process_guiact_smartphone():
-    out_path = "./images/guiact/smartphone"
+    out_path = f"{data_path}/images/guiact/smartphone"
     images = read_data([
         "./data/smartphone_test_images.parquet"
         "./data/smartphone_train_images.parquet",
@@ -116,7 +120,7 @@ def process_guiact_smartphone():
     write_images_version1(images, out_path)
 
 def process_guichat():
-    out_path = "./images/guichat"
+    out_path = f"{data_path}/images/guichat"
     images = read_data([
         "./data/guichat_images.parquet"
     ])

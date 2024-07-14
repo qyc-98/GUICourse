@@ -19,8 +19,8 @@ def convert_guienv_to_qwen_format(data, image2path):
         question = item["prompt"]
         answer = item["label"]
 
-        path = image2path[item["image_id"]]
-        question = f"<img>{path}</img>" + question
+        question = f"<image>\n{question}"
+        img_path = image2path[item["image_id"]]
 
         for pos in re.findall(r"<box>(.*?)</box>", question):
             x1, y1, x2, y2 = pos.strip().split()
@@ -32,54 +32,59 @@ def convert_guienv_to_qwen_format(data, image2path):
 
         conversations = [
             {
-                "from": "user",
-                "value": question
+                "role": "user",
+                "content": question
             },
             {
-                "from": "assistant",
-                "value": answer
+                "role": "assistant",
+                "content": answer
             }
         ]
 
         new_data.append({
             "id": item["uid"],
+            "image": img_path,
             "conversations": conversations
-        })
+        }) 
     return new_data
 
 def convert_guiact_to_qwen_format(data, data_type, image2path):
     new_data = []
     for item in data:
         image_id = item["image_id"]
-        path = image2path[image_id]
-
-        question = f"<img>{path}</img>\n" + item["prompt"]
+        img_path = image2path[item["image_id"]]
+        question = f"<image>\n{item['prompt']}"
         answer = item["label"]
 
         for pos in re.findall(r"<point>(.*?)</point>", answer):
             x1, y1 = pos.strip().split()
+            x1 = x1.replace('(','')
+            y1 = y1.replace(')','')
             answer = answer.replace(f"<point>{pos}</point>", f"<point>({x1},{y1})</point>")
             
         for pos in re.findall(r"<box>(.*?)</box>", answer):
             x1, y1, x2, y2 = pos.strip().split()
+            x1 = x1.replace('(','')
+            y2 = y2.replace(')','')
             answer = answer.replace(f"<box>{pos}</box>", f"<box>({x1},{y1}),({x2},{y2})</box>")
 
         conversations = [
             {
-                "from": "user",
-                "value": question
+                "role": "user",
+                "content": question
             },
             {
-                "from": "assistant",
-                "value": answer
+                "role": "assistant",
+                "content": answer
             }
         ]
 
         new_data.append({
             "id": item["uid"],
+            "image":img_path,
             "type": data_type,
             "conversations": conversations
-        })
+        }) 
     return new_data
 
 def convert_guichat_to_qwen_format(data, image_id2path):
@@ -96,40 +101,44 @@ def convert_guichat_to_qwen_format(data, image_id2path):
             
             res_value = content["value"]
             for x in re.findall(r"<image>(.*?)</image>", res_value):
-                path = image_id2path[x]
-                res_value = res_value.replace(f"<image>{x}</image>", f"<img>{path}</img>")
+                img_path = image_id2path[x]
+                res_value = res_value.replace(f"<image>{x}</image>", f"<image>\n{x}")
 
             for pos in re.findall(r"<box>(.*?)</box>", res_value):
                 x1, y1, x2, y2 = pos.strip().split()
+                x1 = x1.replace('(','')
+                y2 = y2.replace(')','')
                 res_value = res_value.replace(f"<box>{pos}</box>", f"<box>({x1},{y1}),({x2},{y2})</box>")
 
             conversations.append({
-                "from": res_from,
-                "value": res_value
+                "role": res_from,
+                "content": res_value
             })
 
         new_data.append({
             "id": item["uid"],
+            "image": img_path,
             "conversations": conversations
-        })
+        }) 
     return new_data
 
 if __name__ == "__main__":
     all_instructions = []
-
+    
+    
     # guienv
     tag = "train_stage2" 
     ins_data = read_json(f"./data/ocr_grounding_{tag}_sft_instructions.json")
     image2path = read_json(f"./images/guienv/image_id2path.json")
-    new_data = convert_guienv_to_qwen_format(ins_data, image2path)
+    new_data = convert_guienv_to_qwen_format(ins_data, guienv_imgs_path)
     all_instructions.extend(new_data)
-
+    
     # guiact
     tag = "train" 
     for data_name in ["smartphone", "web-single", "web-multi"]:
         ins_data = read_json(f"./data/{data_name}_{tag}_sft_instructions.json")
         image2path = read_json(f"./images/guiact/{data_name}/image_id2path.json")
-        new_data = convert_guiact_to_qwen_format(ins_data, data_name, image2path)
+        new_data = convert_guiact_to_qwen_format(ins_data, data_name, guiact_imgs_path)
         all_instructions.extend(new_data)
 
     # guichat
@@ -142,5 +151,26 @@ if __name__ == "__main__":
     import random
     random.seed(0)
     random.shuffle(all_instructions)
-    write_json(all_instructions, "training_data_qwen.json")
+    write_json(all_instructions, "guicourse_training_data.json")
+
+    all_instructions = []
+   # guienv
+    tag = "test" 
+    ins_data = read_json(f"./data/ocr_grounding_{tag}_sft_instructions.json")
+    image2path = read_json(f"./images/guienv/image_id2path.json")
+    new_data = convert_guienv_to_qwen_format(ins_data, guienv_imgs_path)
+    all_instructions.extend(new_data)
     
+    # guiact
+    tag = "test" 
+    for data_name in ["smartphone", "web-single", "web-multi"]:
+        ins_data = read_json(f"./data/{data_name}_{tag}_sft_instructions.json")
+        image2path = read_json(f"./images/guiact/{data_name}/image_id2path.json")
+        new_data = convert_guiact_to_qwen_format(ins_data, data_name, guiact_imgs_path)
+        all_instructions.extend(new_data)
+
+    print(len(all_instructions))
+    import random
+    random.seed(0)
+    random.shuffle(all_instructions)
+    write_json(all_instructions, "guicourse_test_data.json")
